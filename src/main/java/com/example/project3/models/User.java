@@ -1,5 +1,6 @@
 package com.example.project3.models;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -16,6 +17,7 @@ public class User {
     private String email;
 
     @Column(nullable = false)
+    @JsonProperty("password")
     private String passwordHash;
 
     private String fullName;

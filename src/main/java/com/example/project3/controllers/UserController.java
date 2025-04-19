@@ -12,10 +12,16 @@ import jakarta.servlet.http.HttpSession;
 import java.util.List;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @RestController
 @RequestMapping("/users")
 public class UserController {
     @Autowired private UserService userService;
+
+    private static final Logger logger = LoggerFactory.getLogger(UserController.class);
+
 
     @GetMapping
     public List<User> getAll() {
@@ -47,13 +53,23 @@ public class UserController {
     public ResponseEntity<?> login(@RequestBody User loginUser, HttpSession session) {
         Optional<User> userOpt = userService.findByEmail(loginUser.getEmail());
 
-        if (userOpt.isPresent() && userOpt.get().getPasswordHash().equals(loginUser.getPasswordHash())) {
-            session.setAttribute("userId", userOpt.get().getId());
-            return ResponseEntity.ok(userOpt.get());
-        } else {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+        if (userOpt.isPresent()) {
+            User storedUser = userOpt.get();
+
+            // Debug: log both passwords
+            logger.info("🔐 Incoming password: {}", loginUser.getPasswordHash());
+            logger.info("🔐 Stored password: {}", storedUser.getPasswordHash());
+
+            // Compare stored password with incoming password
+            if (storedUser.getPasswordHash().equals(loginUser.getPasswordHash())) {
+                session.setAttribute("userId", storedUser.getId());
+                return ResponseEntity.ok(storedUser);
+            }
         }
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials AHH");
     }
+
 
     // ---------------------- LOGOUT ----------------------
     @PostMapping("/logout")
