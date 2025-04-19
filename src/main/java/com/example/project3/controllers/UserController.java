@@ -1,0 +1,64 @@
+package com.example.project3.controllers;
+
+import com.example.project3.models.*;
+import com.example.project3.services.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
+
+import jakarta.servlet.http.HttpSession;
+
+import java.util.List;
+import java.util.Optional;
+
+@RestController
+@RequestMapping("/users")
+public class UserController {
+    @Autowired private UserService userService;
+
+    @GetMapping
+    public List<User> getAll() {
+        return userService.findAll();
+    }
+
+    @GetMapping("/{id}")
+    public Optional<User> getById(@PathVariable Long id) {
+        return userService.findById(id);
+    }
+
+    @PostMapping
+    public User create(@RequestBody User user) {
+        return userService.save(user);
+    }
+
+    @PutMapping("/{id}")
+    public User update(@RequestBody User user) {
+        return userService.save(user);
+    }
+
+    @DeleteMapping("/{id}")
+    public void delete(@PathVariable Long id) {
+        userService.deleteById(id);
+    }
+
+    // ---------------------- LOGIN ----------------------
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody User loginUser, HttpSession session) {
+        Optional<User> userOpt = userService.findByEmail(loginUser.getEmail());
+
+        if (userOpt.isPresent() && userOpt.get().getPasswordHash().equals(loginUser.getPasswordHash())) {
+            session.setAttribute("userId", userOpt.get().getId());
+            return ResponseEntity.ok(userOpt.get());
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+        }
+    }
+
+    // ---------------------- LOGOUT ----------------------
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(HttpSession session) {
+        session.invalidate();
+        return ResponseEntity.ok("Logged out successfully");
+    }
+}
