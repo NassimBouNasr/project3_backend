@@ -22,7 +22,6 @@ public class UserController {
 
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);
 
-
     @GetMapping
     public List<User> getAll() {
         return userService.findAll();
@@ -56,20 +55,28 @@ public class UserController {
         if (userOpt.isPresent()) {
             User storedUser = userOpt.get();
 
-            // Debug: log both passwords
             logger.info("🔐 Incoming password: {}", loginUser.getPasswordHash());
             logger.info("🔐 Stored password: {}", storedUser.getPasswordHash());
 
-            // Compare stored password with incoming password
             if (storedUser.getPasswordHash().equals(loginUser.getPasswordHash())) {
-                session.setAttribute("userId", storedUser.getId());
+                session.setAttribute("user", storedUser); // Store user object in session
                 return ResponseEntity.ok(storedUser);
             }
         }
 
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials AHH");
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
     }
 
+    // ---------------------- SESSION STATUS ----------------------
+    @GetMapping("/session")
+    public ResponseEntity<?> getSessionStatus(HttpSession session) {
+        Object user = session.getAttribute("user");
+        if (user != null) {
+            return ResponseEntity.ok().body(user); // You can wrap it with more info if needed
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Not logged in");
+        }
+    }
 
     // ---------------------- LOGOUT ----------------------
     @PostMapping("/logout")
